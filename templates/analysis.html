@@ -224,6 +224,7 @@
         
         let regionGeojsonData = null;
         let regionBoundaryLayer = null;
+        let ethiopiaBoundaryLayer = null;
         let specialHighlightLayer = L.layerGroup();
         let allWaterPointsData = [];
         let waterPointsLayerGroup = L.markerClusterGroup();
@@ -248,6 +249,42 @@
                 iconSize: [36, 36],
                 iconAnchor: [18, 36]
             });
+        }
+
+        function drawEthiopiaBoundary() {
+            if (ethiopiaBoundaryLayer) {
+                map.removeLayer(ethiopiaBoundaryLayer);
+                ethiopiaBoundaryLayer = null;
+            }
+
+            if (regionGeojsonData) {
+                try {
+                    // Use turf.dissolve to merge all region polygons into a single feature
+                    const countryBoundary = turf.dissolve(regionGeojsonData);
+                    
+                    ethiopiaBoundaryLayer = L.geoJSON(countryBoundary, {
+                        style: {
+                            color: '#16a34a', // A strong green color
+                            weight: 3,       // A bit thicker
+                            opacity: 0.8,    // Quite opaque
+                            fillColor: '#dcfce7',
+                            fillOpacity: 0.2
+                        }
+                    }).addTo(map);
+                } catch (e) {
+                    console.error("Error dissolving regions: ", e);
+                    // Fallback in case dissolve fails
+                    ethiopiaBoundaryLayer = L.geoJSON(regionGeojsonData, {
+                        style: {
+                            color: '#16a34a',
+                            weight: 2,
+                            opacity: 0.7,
+                            fillColor: '#dcfce7',
+                            fillOpacity: 0.2
+                        }
+                    }).addTo(map);
+                }
+            }
         }
         
         function highlightSpecialRegions() {
@@ -318,6 +355,7 @@
             ]).then(([waterPoints, regions]) => {
                 
                 regionGeojsonData = regions;
+                drawEthiopiaBoundary();
                 highlightSpecialRegions();
                 
                 const regionFeatures = regions.features;
@@ -390,9 +428,14 @@
                 if (!isEthiopia) {
                     waterPointsLayerGroup.clearLayers();
                     candidateSiteLayerGroup.clearLayers();
+                    specialHighlightLayer.clearLayers();
                     document.getElementById('analysis-results-wrapper').style.display = 'none';
                     if (regionBoundaryLayer) {
                         map.removeLayer(regionBoundaryLayer);
+                    }
+                    if (ethiopiaBoundaryLayer) {
+                        map.removeLayer(ethiopiaBoundaryLayer);
+                        ethiopiaBoundaryLayer = null;
                     }
                 } else {
                     // Reload Ethiopia data if selected back
