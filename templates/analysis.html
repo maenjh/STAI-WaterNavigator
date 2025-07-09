@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Points Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    <style>
+        .leaflet-container {
+            background-color: #f0f9ff;
+        }
+        .blinking-animation{
+            animation:blinking 1.5s ease-in-out infinite alternate
+        }
+        @keyframes blinking{
+            0%{ opacity:1 }
+            100%{ opacity:0.2 }
+        }
+    </style>
+</head>
+<body class="bg-[#f0f9ff]">
+    <div class="min-h-screen flex p-4">
+        <main class="w-full max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-8">
+
+            <!-- Left Panel (Map) -->
+            <div class="flex-1 flex flex-col gap-4">
+                <h1 class="text-2xl font-bold text-gray-800 px-4">Water Infrastructure Recommendations</h1>
+                <div id="map" class="flex-1 rounded-xl shadow-lg">
+                    <!-- Map is rendered here -->
+                </div>
+            </div>
+
+            <!-- Right Panel (Controls) -->
+            <aside class="w-full lg:w-[420px] bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-6">
+
+                <!-- Filters -->
+                <div>
+                    <h2 class="text-xl font-bold mb-4 text-[#1e3a8a]">Filters</h2>
+                    <form>
+                        <div class="mb-4">
+                            <label for="country-select" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                            <select id="country-select" class="w-full border-gray-300 rounded-md shadow-sm">
+                                <option>Ethiopia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="region-select" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                            <select id="region-select" disabled class="w-full border-gray-300 rounded-md shadow-sm bg-gray-100">
+                                <option>Loading regions...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Core Analysis -->
+                <div>
+                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">핵심 분석</h2>
+                    <div id="core-analysis-controls" class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm font-bold mb-2">분석 실행</p>
+                        <button id="start-analysis-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition w-full">
+                            분석 실행
+                        </button>
+                    </div>
+                    <div id="analysis-processing-indicator" class="hidden mt-2">
+                        <p class="text-gray-600 animate-pulse">processing...</p>
+                    </div>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="analysis-results-wrapper" class="hidden">
+                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">분석 결과</h2>
+                    <div id="analysis-results">
+                        <h3 class="text-lg font-semibold">후보 지역</h3>
+                        <p class="text-gray-600">총 <span id="candidate-sites-count" class="font-bold">0</span>개의 후보지를 찾았습니다.</p>
+                        <div id="candidate-sites-list" class="mt-2 max-h-48 overflow-y-auto"></div>
+                    </div>
+                </div>
+                
+                <!-- Legend -->
+                <div class="mt-auto">
+                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">Legend</h2>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-500">place</span>
+                                <span>Existing Water Point</span>
+                            </div>
+                            <span id="existing-water-points-count" class="font-bold">0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-500">place</span>
+                                <span>추천 후보지</span>
+                            </div>
+                            <span id="candidate-sites-count-legend" class="font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+        </main>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const map = L.map('map').setView([9.145, 40.4897], 6);
+        
+        map.whenReady(() => {
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let ethiopiaRegions = {
+            "Addis Abeba": { lat: 9.0, lon: 38.75 },
+            "Afar": { lat: 11.71, lon: 41.03 },
+            "Amhara": { lat: 11.59, lon: 37.95 },
+            "Benishangul-Gumuz": { lat: 10.77, lon: 35.61 },
+            "Dire Dawa": { lat: 9.6, lon: 41.85 },
+            "Gambela": { lat: 7.91, lon: 34.66 },
+            "Harari": { lat: 9.31, lon: 42.12 },
+            "Oromia": { lat: 7.55, lon: 40.63 },
+            "SNNP": { lat: 6.35, lon: 36.67 },
+            "Somali": { lat: 7.22, lon: 43.79 },
+            "Tigray": { lat: 13.88, lon: 39.13 }
+        };
+        
+        let regionGeojsonData = null;
+        let regionBoundaryLayer = null;
+        let allWaterPointsData = [];
+        let waterPointsLayerGroup = L.markerClusterGroup();
+        let candidateSiteLayerGroup = L.layerGroup();
+        let convergingLinesLayerGroup = L.layerGroup();
+
+        const waterPointIcon = L.divIcon({
+            html: `<span class="material-icons text-blue-500" style="font-size: 24px;">place</span>`,
+            className: 'custom-div-icon',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        });
+
+        const candidateSiteIcon = L.divIcon({
+            html: `<span class="material-icons text-red-500" style="font-size: 28px;">place</span>`,
+            className: 'custom-div-icon',
+            iconSize: [28, 28],
+            iconAnchor: [14, 28]
+        });
+        
+        function loadData() {
+            Promise.all([
+                fetch('/api/waterpoints').then(res => res.json()),
+                fetch('/static/ethiopia_regions.json').then(res => res.json())
+            ]).then(([waterPoints, regions]) => {
+                
+                regionGeojsonData = regions;
+                
+                const regionFeatures = regions.features;
+                const pointsInEthiopia = waterPoints.filter(point => {
+                    if (!point.lat || !point.lon) return false;
+                    const turfPoint = turf.point([point.lon, point.lat]);
+                    for (const feature of regionFeatures) {
+                        if (turf.booleanPointInPolygon(turfPoint, feature)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                
+                allWaterPointsData = pointsInEthiopia; 
+
+                document.getElementById('existing-water-points-count').textContent = pointsInEthiopia.length.toLocaleString();
+                waterPointsLayerGroup.clearLayers();
+                const markers = pointsInEthiopia.map(point => {
+                    return L.marker([point.lat, point.lon], {
+                        icon: waterPointIcon
+                    }).bindPopup(`Water Point: ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lon).toFixed(4)}`);
+                });
+                waterPointsLayerGroup.addLayers(markers);
+
+            }).catch(error => {
+                console.error('Error loading map data:', error);
+            });
+        }
+        
+        loadData();
+
+        map.addLayer(waterPointsLayerGroup);
+        map.addLayer(candidateSiteLayerGroup);
+        map.addLayer(convergingLinesLayerGroup);
+       
+        const regionSelect = document.getElementById('region-select');
+        
+        fetch('/static/ethiopia_regions.json')
+            .then(response => response.json())
+            .then(data => {
+                const regionNames = data.features.map(feature => feature.properties.NAME_1).sort();
+                regionSelect.innerHTML = '<option value="">전체 보기</option>';
+                regionNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    regionSelect.appendChild(option);
+                });
+                regionSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading region data:', error);
+                regionSelect.disabled = true;
+            });
+
+        regionSelect.addEventListener('change', (event) => {
+            const regionName = event.target.value;
+            
+            if (regionBoundaryLayer) {
+                map.removeLayer(regionBoundaryLayer);
+            }
+
+            if (!regionName || regionName === "") {
+                map.setView([9.145, 40.4897], 6);
+                return;
+            }
+
+            if (regionGeojsonData) {
+                const regionFeature = regionGeojsonData.features.find(
+                    feature => feature.properties.NAME_1 === regionName
+                );
+
+                if (regionFeature) {
+                    regionBoundaryLayer = L.geoJSON(regionFeature, {
+                        style: {
+                            color: "#3b82f6",
+                            weight: 2,
+                            opacity: 1,
+                            fillColor: "#bfdbfe",
+                            fillOpacity: 0.4
+                        }
+                    }).addTo(map);
+                    map.fitBounds(regionBoundaryLayer.getBounds());
+                } else {
+                    if (ethiopiaRegions[regionName]) {
+                        const { lat, lon } = ethiopiaRegions[regionName];
+                        map.setView([lat, lon], 9);
+                    }
+                }
+            }
+        });
+
+        const startAnalysisBtn = document.getElementById('start-analysis-btn');
+        startAnalysisBtn.addEventListener('click', () => {
+            startAnalysisBtn.parentElement.style.display = 'none';
+            document.getElementById('analysis-processing-indicator').style.display = 'block';
+
+            setTimeout(() => {
+                document.getElementById('analysis-processing-indicator').style.display = 'none';
+                document.getElementById('analysis-results-wrapper').style.display = 'block';
+                
+                const candidatePoints = generateCandidateSites();
+                visualizeCandidateSites(candidatePoints);
+                visualizeConvergingLines(candidatePoints);
+                
+            }, 2000);
+        });
+
+        function visualizeCandidateSites(points) {
+            candidateSiteLayerGroup.clearLayers();
+            const listElement = document.getElementById('candidate-sites-list');
+            listElement.innerHTML = '';
+
+            document.getElementById('candidate-sites-count').textContent = points.length;
+            document.getElementById('candidate-sites-count-legend').textContent = points.length;
+
+            points.forEach(point => {
+                const marker = L.marker([point.lat, point.lon], { icon: candidateSiteIcon })
+                    .bindPopup(`<b>Candidate Site</b><br>Lat: ${point.lat.toFixed(4)}, Lon: ${point.lon.toFixed(4)}`);
+                candidateSiteLayerGroup.addLayer(marker);
+
+                const listItem = document.createElement('div');
+                listItem.className = 'p-2 border-b cursor-pointer hover:bg-gray-100';
+                listItem.textContent = `Lat: ${point.lat.toFixed(4)}, Lon: ${point.lon.toFixed(4)}`;
+                listItem.onclick = () => map.setView([point.lat, point.lon], 14);
+                listElement.appendChild(listItem);
+            });
+        }
+
+        function visualizeConvergingLines(candidatePoints) {
+            convergingLinesLayerGroup.clearLayers();
+            if (allWaterPointsData.length === 0) return;
+
+            const NUM_NEAREST_POINTS = 7;
+            const turfWaterPoints = allWaterPointsData.map(p => turf.point([p.lon, p.lat]));
+
+            candidatePoints.forEach(candidate => {
+                const turfCandidate = turf.point([candidate.lon, candidate.lat]);
+                
+                const nearest = turf.nearestPoint(turfCandidate, turf.featureCollection(turfWaterPoints));
+
+                const distances = turfWaterPoints.map(wp => ({
+                    point: wp,
+                    distance: turf.distance(turfCandidate, wp)
+                })).sort((a, b) => a.distance - b.distance);
+
+                for (let i = 0; i < NUM_NEAREST_POINTS && i < distances.length; i++) {
+                    const line = turf.lineString([
+                        turfCandidate.geometry.coordinates,
+                        distances[i].point.geometry.coordinates
+                    ]);
+                    L.geoJSON(line, {
+                        style: { color: '#FF4500', weight: 1.5, opacity: 0.7, dashArray: '5, 5' }
+                    }).addTo(convergingLinesLayerGroup);
+                }
+            });
+        }
+
+        function generateCandidateSites() {
+            candidateSiteLayerGroup.clearLayers();
+            convergingLinesLayerGroup.clearLayers();
+            
+            const bounds = map.getBounds();
+            const southWest = bounds.getSouthWest();
+            const northEast = bounds.getNorthEast();
+            
+            const candidatePoints = [];
+            for (let i = 0; i < 5; i++) {
+                const lat = southWest.lat + Math.random() * (northEast.lat - southWest.lat);
+                const lon = southWest.lng + Math.random() * (northEast.lng - southWest.lng);
+                candidatePoints.push({ lat, lon });
+            }
+            return candidatePoints;
+        }
+
+    });
+</script>
+</body>
+</html> 
