@@ -31,24 +31,24 @@
             animation: blink 0.7s infinite;
         }
         .marker-cluster-small {
-            background-color: rgba(204, 204, 204, 0.6) !important;
+            background-color: rgba(191, 219, 254, 0.6) !important;
         }
         .marker-cluster-small div {
-            background-color: rgba(160, 160, 160, 0.6) !important;
+            background-color: rgba(147, 197, 253, 0.6) !important;
         }
 
         .marker-cluster-medium {
-            background-color: rgba(153, 153, 153, 0.6) !important;
+            background-color: rgba(96, 165, 250, 0.6) !important;
         }
         .marker-cluster-medium div {
-            background-color: rgba(119, 119, 119, 0.6) !important;
+            background-color: rgba(59, 130, 246, 0.6) !important;
         }
 
         .marker-cluster-large {
-            background-color: rgba(119, 119, 119, 0.6) !important;
+            background-color: rgba(37, 99, 235, 0.6) !important;
         }
         .marker-cluster-large div {
-            background-color: rgba(85, 85, 85, 0.6) !important;
+            background-color: rgba(29, 78, 216, 0.6) !important;
         }
     </style>
 </head>
@@ -224,7 +224,7 @@
         
         let regionGeojsonData = null;
         let regionBoundaryLayer = null;
-        let candidateRegionHighlightLayer = null;
+        let specialHighlightLayer = L.layerGroup();
         let allWaterPointsData = [];
         let waterPointsLayerGroup = L.markerClusterGroup();
         let candidateSiteLayerGroup = L.layerGroup();
@@ -250,6 +250,44 @@
             });
         }
         
+        function highlightSpecialRegions() {
+            if (specialHighlightLayer) {
+                specialHighlightLayer.clearLayers();
+            }
+
+            if (regionGeojsonData) {
+                const regionName = "Bani Shangul-Gumuz";
+                const regionFeature = regionGeojsonData.features.find(
+                    feature => feature.properties.NAME_1 === regionName
+                );
+
+                if (regionFeature) {
+                    const highlight = L.geoJSON(regionFeature, {
+                        style: {
+                            color: "#800080",
+                            weight: 1,
+                            opacity: 0.6,
+                            fillColor: "#800080",
+                            fillOpacity: 0.2
+                        }
+                    }).bindPopup("Benishangul-Gumuz");
+                    specialHighlightLayer.addLayer(highlight);
+                }
+            }
+            
+            const lakeTanaCoords = [12.02, 37.31];
+            const lakeTanaRadius = 35000;
+            const lakeTanaCircle = L.circle(lakeTanaCoords, {
+                radius: lakeTanaRadius,
+                color: "#800080",
+                weight: 1,
+                opacity: 0.6,
+                fillColor: "#800080",
+                fillOpacity: 0.2
+            }).bindPopup("Lake Tana");
+            specialHighlightLayer.addLayer(lakeTanaCircle);
+        }
+
         function loadData() {
             Promise.all([
                 fetch('/api/waterpoints').then(res => res.json()),
@@ -257,6 +295,7 @@
             ]).then(([waterPoints, regions]) => {
                 
                 regionGeojsonData = regions;
+                highlightSpecialRegions();
                 
                 const regionFeatures = regions.features;
                 const pointsInEthiopia = waterPoints.filter(point => {
@@ -290,6 +329,7 @@
 
         map.addLayer(waterPointsLayerGroup);
         map.addLayer(candidateSiteLayerGroup);
+        map.addLayer(specialHighlightLayer);
        
         const regionSelect = document.getElementById('region-select');
         
@@ -330,9 +370,6 @@
                     document.getElementById('analysis-results-wrapper').style.display = 'none';
                     if (regionBoundaryLayer) {
                         map.removeLayer(regionBoundaryLayer);
-                    }
-                    if (candidateRegionHighlightLayer) {
-                        map.removeLayer(candidateRegionHighlightLayer);
                     }
                 } else {
                     // Reload Ethiopia data if selected back
@@ -389,34 +426,9 @@
                 
                 const candidatePoints = findCandidateSites();
                 displayCandidateSites(candidatePoints);
-                highlightCandidateRegion();
                 
             }, 1500);
         });
-
-        function highlightCandidateRegion() {
-            if (candidateRegionHighlightLayer) {
-                map.removeLayer(candidateRegionHighlightLayer);
-            }
-            if (regionGeojsonData) {
-                const regionName = "Amhara";
-                const regionFeature = regionGeojsonData.features.find(
-                    feature => feature.properties.NAME_1 === regionName
-                );
-
-                if (regionFeature) {
-                    candidateRegionHighlightLayer = L.geoJSON(regionFeature, {
-                        style: {
-                            color: "#ff0000",
-                            weight: 2,
-                            opacity: 1,
-                            fillColor: "#ff0000",
-                            fillOpacity: 0.3
-                        }
-                    }).addTo(map);
-                }
-            }
-        }
 
         function findCandidateSites() {
             // Returns hardcoded candidate sites
