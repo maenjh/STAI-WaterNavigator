@@ -256,7 +256,7 @@
             }
 
             if (regionGeojsonData) {
-                const regionName = "Bani Shangul-Gumuz";
+                const regionName = "Benshangul-Gumaz";
                 const regionFeature = regionGeojsonData.features.find(
                     feature => feature.properties.NAME_1 === regionName
                 );
@@ -286,6 +286,22 @@
                 fillOpacity: 0.2
             }).bindPopup("Lake Tana");
             specialHighlightLayer.addLayer(lakeTanaCircle);
+
+            const alatishParkCoords = [
+                [12.5, 35.2],
+                [12.5, 35.8],
+                [12.0, 35.8],
+                [12.0, 35.2],
+                [12.5, 35.2]
+            ];
+            const alatishParkPolygon = L.polygon(alatishParkCoords, {
+                color: "#800080",
+                weight: 1,
+                opacity: 0.6,
+                fillColor: "#800080",
+                fillOpacity: 0.2
+            }).bindPopup("Alatish National Park");
+            specialHighlightLayer.addLayer(alatishParkPolygon);
         }
 
         function loadData() {
