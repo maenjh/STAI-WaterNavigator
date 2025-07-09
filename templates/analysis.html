@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -97,11 +97,11 @@
 
                 <!-- Core Analysis -->
                 <div>
-                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">핵심 분석</h2>
+                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">Core Analysis</h2>
                     <div id="core-analysis-controls" class="bg-gray-50 p-4 rounded-lg">
-                        <p class="text-sm font-bold mb-2">분석 실행</p>
+                        <p class="text-sm font-bold mb-2">Run Analysis</p>
                         <button id="start-analysis-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition w-full">
-                            분석 실행
+                            Start Analysis
                         </button>
                     </div>
                     <div id="analysis-processing-indicator" class="hidden mt-2">
@@ -111,10 +111,10 @@
 
                 <!-- Analysis Results -->
                 <div id="analysis-results-wrapper" class="hidden">
-                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">분석 결과</h2>
+                    <h2 class="text-xl font-bold mb-2 text-[#1e3a8a]">Analysis Results</h2>
                     <div id="analysis-results">
-                        <h3 class="text-lg font-semibold">후보 지역</h3>
-                        <p class="text-gray-600">총 <span id="candidate-sites-count" class="font-bold">0</span>개의 후보지를 찾았습니다.</p>
+                        <h3 class="text-lg font-semibold">Candidate Sites</h3>
+                        <p class="text-gray-600">Found <span id="candidate-sites-count" class="font-bold">0</span> candidate sites.</p>
                         <div id="candidate-sites-list" class="mt-2 max-h-48 overflow-y-auto"></div>
                         
                         <!-- Generate Report Button -->
@@ -140,7 +140,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="material-icons text-red-500">place</span>
-                                <span>추천 후보지</span>
+                                <span>Recommended Site</span>
                             </div>
                             <span id="candidate-sites-count-legend" class="font-bold">0</span>
                         </div>
@@ -277,7 +277,7 @@
             .then(response => response.json())
             .then(data => {
                 const regionNames = data.features.map(feature => feature.properties.NAME_1).sort();
-                regionSelect.innerHTML = '<option value="">전체 보기</option>';
+                regionSelect.innerHTML = '<option value="">View All</option>';
                 regionNames.forEach(name => {
                     const option = document.createElement('option');
                     option.value = name;
@@ -399,7 +399,7 @@
         }
 
         function findCandidateSites() {
-            // 하드코딩된 후보지를 반환합니다.
+            // Returns hardcoded candidate sites
             return [
                 { lat: 5.905696, lon: 38.650472 },
                 { lat: 10.819452, lon: 36.647936 },
@@ -433,7 +433,7 @@
 
                 const marker = L.marker([lat, lon], {
                     icon: createNumberedIcon(siteNumber)
-                }).bindPopup(`<b>후보지 #${siteNumber}</b><br>위도: ${lat.toFixed(4)}, 경도: ${lon.toFixed(4)}`);
+                }).bindPopup(`<b>Candidate Site #${siteNumber}</b><br>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`);
 
                 markers.push(marker);
 
@@ -443,15 +443,15 @@
                     <div class="flex items-center gap-3 flex-grow cursor-pointer">
                         <span class="flex-shrink-0 flex items-center justify-center w-6 h-6 bg-red-500 text-white font-bold rounded-full text-sm">${siteNumber}</span>
                         <div class="text-sm">
-                            <span class="font-medium text-gray-800">위도: ${lat.toFixed(2)}</span>, 
-                            <span class="font-medium text-gray-800">경도: ${lon.toFixed(2)}</span>
+                            <span class="font-medium text-gray-800">Lat: ${lat.toFixed(2)}</span>, 
+                            <span class="font-medium text-gray-800">Lon: ${lon.toFixed(2)}</span>
                         </div>
                     </div>
                     <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer" data-site-number="${siteNumber}" data-lat="${lat}" data-lon="${lon}">
                 `;
                 
                 listItem.addEventListener('click', (e) => {
-                    // 체크박스 클릭 시에는 지도 이동 방지
+                    // Prevent map pan when clicking the checkbox
                     if (e.target.type !== 'checkbox') {
                         map.flyTo([lat, lon], 12);
                         marker.openPopup();
@@ -515,180 +515,180 @@
             reportContainer.classList.remove('hidden');
             
             const fullReportText = `
-                <h3 class="text-xl font-bold mb-4">우물 후보 4 개 지점 선정·분석 종합 리포트</h3>
+                <h3 class="text-xl font-bold mb-4">Comprehensive Analysis Report for 4 Well Candidates</h3>
                 <p class="text-sm text-gray-500 mb-6">(Hambela Wamena, Ankasha, Dodota, Shala)</p>
 
-                <h4 class="font-bold mt-6 mb-2">1. 평가 프레임워크 요약</h4>
+                <h4 class="font-bold mt-6 mb-2">1. Evaluation Framework Summary</h4>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">단계</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">설명</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">반영 비율</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Step</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Weight</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 text-sm">
                             <tr>
-                                <td class="px-4 py-4">① 적격 필터</td>
+                                <td class="px-4 py-4">① Eligibility Filter</td>
                                 <td class="px-4 py-4">
                                     <ul class="list-disc list-inside">
-                                        <li>기존 우물 반경 10 km 외</li>
-                                        <li>지하수 등급 ≥ I-M/H (또는 ‘Very High’)</li>
-                                        <li>토지 이용: 경작·정착지 값 0</li>
-                                        <li>가뭄지수 ≤ 1.0 (극심) 또는 ≥ 9.0 (저긴급)</li>
+                                        <li>Outside 10 km radius of existing wells</li>
+                                        <li>Groundwater potential ≥ I-M/H (or ‘Very High’)</li>
+                                        <li>Land Use: Cropland/Settlement value = 0</li>
+                                        <li>Drought Index ≤ 1.0 (Extreme) or ≥ 9.0 (Low Urgency)</li>
                                     </ul>
                                 </td>
                                 <td class="px-4 py-4">―</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">② 정량 점수</td>
-                                <td class="px-4 py-4">인구 30 % · 지하수 30 % · 가뭄 20 % · 토지 20 % (0–1 척도)</td>
-                                <td class="px-4 py-4">100 %</td>
+                                <td class="px-4 py-4">② Quantitative Score</td>
+                                <td class="px-4 py-4">Population 30% · Groundwater 30% · Drought 20% · Land Use 20% (0–1 scale)</td>
+                                <td class="px-4 py-4">100%</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">③ 품질 검증</td>
-                                <td class="px-4 py-4">시추 성공률·수질, 태양광 면적, 접근성 등 기술·재무 실현성</td>
-                                <td class="px-4 py-4">보완 지표</td>
+                                <td class="px-4 py-4">③ Quality Assurance</td>
+                                <td class="px-4 py-4">Technical/financial feasibility (drilling success, water quality, solar panel area, accessibility)</td>
+                                <td class="px-4 py-4">Supplementary</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">④ 분쟁 리스크</td>
-                                <td class="px-4 py-4">초국가 수량 갈등, 지역·민족 갈등, 환경 규제 위험</td>
-                                <td class="px-4 py-4">서술 평가</td>
+                                <td class="px-4 py-4">④ Conflict Risk</td>
+                                <td class="px-4 py-4">Transnational water conflict, local/ethnic disputes, environmental regulations</td>
+                                <td class="px-4 py-4">Narrative</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h4 class="font-bold mt-6 mb-2">2. 후보지별 상세 분석</h4>
+                <h4 class="font-bold mt-6 mb-2">2. Detailed Candidate Site Analysis</h4>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">좌표 / 행정구역</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">선정 핵심 이유</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">잠재 분쟁·환경 리스크</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Coordinates / Admin Area</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Key Selection Rationale</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Potential Conflict/Environmental Risk</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 text-sm">
                             <tr>
                                 <td class="px-4 py-4">1</td>
-                                <td class="px-4 py-4">5.91 °N, 38.65 °E<br>Hambela Wamena (Guji 존)</td>
+                                <td class="px-4 py-4">5.91 °N, 38.65 °E<br>Hambela Wamena (Guji Zone)</td>
                                 <td class="px-4 py-4">
                                     <ul class="list-disc list-inside">
-                                        <li>인구 296 명 km⁻²</li>
-                                        <li>기존 우물 54.5 km</li>
-                                        <li>Genale-Dawa 현무암층, I-M/H 등급 → 1–5 L s⁻¹ 예상 <br><small>scirp.org, etd.aau.edu.et</small></li>
-                                        <li>지속 가뭄·사료 부족 지역</li>
+                                        <li>Population: 296 persons/km²</li>
+                                        <li>54.5 km from existing well</li>
+                                        <li>Genale-Dawa basalt aquifer, I-M/H rating → 1–5 L s⁻¹ yield expected <br><small>scirp.org, etd.aau.edu.et</small></li>
+                                        <li>Persistent drought/fodder shortage area</li>
                                     </ul>
                                 </td>
-                                <td class="px-4 py-4"><strong>중간</strong> – Genale-Dawa 수계가 케냐·소말리아로 이어져 장래 관개 확장 시 수량 배분 협상 필요. 지역 목축민 간 우물 소유권 분쟁 사례도 있음 <br><small>earthisland.org</small></td>
+                                <td class="px-4 py-4"><strong>Medium</strong> – Genale-Dawa basin extends to Kenya/Somalia, requiring future negotiations for irrigation expansion. Past disputes over well ownership among pastoralists. <br><small>earthisland.org</small></td>
                             </tr>
                             <tr>
                                 <td class="px-4 py-4">2</td>
-                                <td class="px-4 py-4">10.82 °N, 36.65 °E<br>Ankasha (Awi 존)</td>
+                                <td class="px-4 py-4">10.82 °N, 36.65 °E<br>Ankasha (Awi Zone)</td>
                                 <td class="px-4 py-4">
                                     <ul class="list-disc list-inside">
-                                        <li>인구 230 명 km⁻²</li>
-                                        <li>Blue Nile 상류, I-M/H 지질 <br><small>sciencedirect.com</small></li>
-                                        <li>가뭄지수 0.0 → 최우선 수요</li>
+                                        <li>Population: 230 persons/km²</li>
+                                        <li>Upper Blue Nile, I-M/H geology <br><small>sciencedirect.com</small></li>
+                                        <li>Drought Index 0.0 → Highest priority need</li>
                                     </ul>
                                 </td>
-                                <td class="px-4 py-4"><strong>높음</strong> – Blue Nile 수계 신규 양수는 이집트·수단과 긴장 지속. GERD 운영·충수 시기와 연동된 외교 민감 지역 <br><small>apnews.com, carnegieendowment.org, sciencedirect.com</small></td>
+                                <td class="px-4 py-4"><strong>High</strong> – New abstraction in Blue Nile basin maintains tension with Egypt/Sudan. Diplomatically sensitive area linked to GERD operation/filling schedule. <br><small>apnews.com, carnegieendowment.org, sciencedirect.com</small></td>
                             </tr>
                             <tr>
                                 <td class="px-4 py-4">3</td>
-                                <td class="px-4 py-4">8.20 °N, 39.13 °E<br>Dodota (Arsi 존)</td>
+                                <td class="px-4 py-4">8.20 °N, 39.13 °E<br>Dodota (Arsi Zone)</td>
                                 <td class="px-4 py-4">
                                     <ul class="list-disc list-inside">
-                                        <li>인구 212 명 km⁻²</li>
-                                        <li>기존 우물 22.6 km</li>
-                                        <li>리프트계곡 현무암, I-M/H</li>
-                                        <li>식수·축수 겸용 잠재</li>
+                                        <li>Population: 212 persons/km²</li>
+                                        <li>22.6 km from existing well</li>
+                                        <li>Rift Valley basalt, I-M/H</li>
+                                        <li>Potential for dual drinking/livestock use</li>
                                     </ul>
                                 </td>
-                                <td class="px-4 py-4"><strong>낮음(외교)</strong> – 폐쇄 내륙 유역<br><strong>주의(건강)</strong> – 고불소·염분 잠재, 필터 비용 반영 필요 <br><small>researchgate.net, pmc.ncbi.nlm.nih.gov</small></td>
+                                <td class="px-4 py-4"><strong>Low (Diplomatic)</strong> – Closed inland basin.<br><strong>Caution (Health)</strong> – High fluoride/salinity potential, requires budgeting for filters. <br><small>researchgate.net, pmc.ncbi.nlm.nih.gov</small></td>
                             </tr>
                             <tr>
                                 <td class="px-4 py-4">4</td>
-                                <td class="px-4 py-4">7.49 °N, 38.53 °E<br>Shala (West Arsi 존)</td>
+                                <td class="px-4 py-4">7.49 °N, 38.53 °E<br>Shala (West Arsi Zone)</td>
                                 <td class="px-4 py-4">
                                     <ul class="list-disc list-inside">
-                                        <li>인구 283 명 km⁻²</li>
-                                        <li>Very High 지하수 등급, 18 km 이상 기존 우물</li>
-                                        <li>반복 가뭄 및 IPC 2-3 단계 <br><small>sciencedirect.com, amazon.com</small></li>
+                                        <li>Population: 283 persons/km²</li>
+                                        <li>Very High groundwater rating, >18 km from wells</li>
+                                        <li>Recurrent drought & IPC Phase 2-3 <br><small>sciencedirect.com, amazon.com</small></li>
                                     </ul>
                                 </td>
-                                <td class="px-4 py-4"><strong>매우 낮음(외교)</strong> – 폐쇄호수 유역<br><strong>보통(지역)</strong> – 목축 이동경로 중첩, 이용 규정·관리위 설치 필요 <br><small>ejol.aau.edu.et</small></td>
+                                <td class="px-4 py-4"><strong>Very Low (Diplomatic)</strong> – Closed lake basin.<br><strong>Medium (Local)</strong> – Overlaps with pastoralist migration routes, requires usage rules & management committee. <br><small>ejol.aau.edu.et</small></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h4 class="font-bold mt-6 mb-2">3. 왜 이 네 곳인가?</h4>
-                <h5 class="font-semibold mt-4 mb-1">사회·경제 편익 극대화</h5>
-                <p>평균 인구 255 명 km⁻², 기존 우물 네트워크와 18 – 55 km 떨어져 ‘중복 투자’ 위험이 없음.</p>
-                <h5 class="font-semibold mt-4 mb-1">지하수 성공 가능성</h5>
-                <p>네 곳 모두 균열 현무암대(I-M/H) 또는 Very High 등급으로, 시추 성공률 ≥ 80 % 예측.</p>
-                <h5 class="font-semibold mt-4 mb-1">가뭄·식수 긴급도</h5>
-                <p>Hambela·Ankasha·Dodota·Shala 모두 가뭄지수 0.0 또는 IPC 2-3 수준의 물 스트레스 지역.</p>
-                <h5 class="font-semibold mt-4 mb-1">토지 갈등 최소화</h5>
-                <p>Geo-Wiki 값 0 → 경작·정착지 없는 공동 목초지/초지·공원 완충대; 사유지 보상 부담 ↓.</p>
+                <h4 class="font-bold mt-6 mb-2">3. Why These Four Locations?</h4>
+                <h5 class="font-semibold mt-4 mb-1">Maximize Socio-Economic Benefit</h5>
+                <p>Average population of 255 persons/km², located 18–55 km from existing well networks, avoiding "redundant investment" risk.</p>
+                <h5 class="font-semibold mt-4 mb-1">High Probability of Groundwater Success</h5>
+                <p>All four sites are on fractured basalt aquifers (I-M/H) or rated "Very High," predicting ≥80% drilling success rate.</p>
+                <h5 class="font-semibold mt-4 mb-1">Urgent Drought and Water Needs</h5>
+                <p>Hambela, Ankasha, Dodota, and Shala are all in water-stressed areas with a Drought Index of 0.0 or IPC Phase 2-3.</p>
+                <h5 class="font-semibold mt-4 mb-1">Minimize Land Conflict</h5>
+                <p>Geo-Wiki value of 0 indicates communal pastureland/grassland or park buffer zones, not private cropland/settlements, reducing compensation burdens.</p>
 
-                <h4 class="font-bold mt-6 mb-2">4. 분쟁 · 위협 통합 평가</h4>
+                <h4 class="font-bold mt-6 mb-2">4. Integrated Conflict & Threat Assessment</h4>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">유형</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">위치</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">리스크 요약</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">대응 권고</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Risk Summary</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Recommended Response</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 text-sm">
                             <tr>
-                                <td class="px-4 py-4">초국가 수계 갈등</td>
+                                <td class="px-4 py-4">Transnational Water Conflict</td>
                                 <td class="px-4 py-4">Ankasha (Blue Nile)</td>
-                                <td class="px-4 py-4">GERD 이후 이집트·수단의 “상류 신규 개발 감시” 대상.</td>
-                                <td class="px-4 py-4">NBI, AU-WRG 등 국제 투명성 플랫폼에 수위·양수 데이터 실시간 공개.</td>
+                                <td class="px-4 py-4">Monitored by Egypt/Sudan for "new upstream development" post-GERD.</td>
+                                <td class="px-4 py-4">Publish real-time water level/abstraction data to international platforms (NBI, AU-WRG).</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">연계 수계 협상</td>
+                                <td class="px-4 py-4">Linked Basin Negotiations</td>
                                 <td class="px-4 py-4">Hambela Wamena</td>
-                                <td class="px-4 py-4">Genale-Dawa 하류(소말리아·케냐) 관개 확장 시 물 배분 협상 필요.</td>
-                                <td class="px-4 py-4">IGAD 수자원 작업반에 프로젝트 등록, 삼국 MOU 추진.</td>
+                                <td class="px-4 py-4">Future water allocation negotiations needed for downstream irrigation in Somalia/Kenya.</td>
+                                <td class="px-4 py-4">Register project with IGAD water working group, pursue trilateral MOU.</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">지역 목축·민족 분쟁</td>
-                                <td class="px-4 py-4">Hambela·Shala</td>
-                                <td class="px-4 py-4">보레홀 소유권·접근 통제로 무력 충돌 사례.</td>
-                                <td class="px-4 py-4">우물 관리위원회 구성, 전통 의사결정(Gadaa) 절차 포함.</td>
+                                <td class="px-4 py-4">Local Pastoral/Ethnic Conflict</td>
+                                <td class="px-4 py-4">Hambela & Shala</td>
+                                <td class="px-4 py-4">Armed clashes documented over borehole ownership and access control.</td>
+                                <td class="px-4 py-4">Establish well management committee, including traditional (Gadaa) decision-making processes.</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4">수질·보건 위험</td>
+                                <td class="px-4 py-4">Water Quality & Health Risk</td>
                                 <td class="px-4 py-4">Dodota</td>
-                                <td class="px-4 py-4">불소·염분 농도↑ → 치아·골격 플루오린증 우려.</td>
-                                <td class="px-4 py-4">역삼투·활성알루미나 필터 예산( CapEx + OpEx ≒ 0.5 US¢ L⁻¹) 포함.</td>
+                                <td class="px-4 py-4">High fluoride/salinity → risk of dental/skeletal fluorosis.</td>
+                                <td class="px-4 py-4">Include budget for RO/Activated Alumina filters (CapEx + OpEx ≈ 0.5 US¢ L⁻¹).</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h4 class="font-bold mt-6 mb-2">5. 종합 권고</h4>
-                <h5 class="font-semibold mt-4 mb-1">착수 우선순위</h5>
-                <p>Ankasha ↔ Hambela Wamena (긴급도·편익 동등) → 병행 타당성 조사, Dodota·Shala는 2차 단계.</p>
-                <h5 class="font-semibold mt-4 mb-1">외교·데이터 투명성</h5>
-                <p>Ankasha 프로젝트는 Nile Basin Initiative 포털에 양수·수위 실시간 송신.</p>
-                <h5 class="font-semibold mt-4 mb-1">지역 참여</h5>
-                <p>두 목축 지역(Hambela, Shala)은 커뮤니티 우물 관리위원회 + 전통 엘더 자문 의무화.</p>
-                <h5 class="font-semibold mt-4 mb-1">수질 관리</h5>
-                <p>Dodota는 불소 제거 필터 예산 반영, 연 1회 수질 모니터링.</p>
-                <h5 class="font-semibold mt-4 mb-1">장기 모니터링</h5>
-                <p>4 개소 모두 IoT 유량·수위 센서 + 위성 통신 설치, 공개 대시보드로 투명성 확보.</p>
+                <h4 class="font-bold mt-6 mb-2">5. Overall Recommendations</h4>
+                <h5 class="font-semibold mt-4 mb-1">Implementation Priority</h5>
+                <p>Ankasha ↔ Hambela Wamena (equal urgency/benefit) → conduct parallel feasibility studies. Dodota & Shala as second phase.</p>
+                <h5 class="font-semibold mt-4 mb-1">Diplomacy & Data Transparency</h5>
+                <p>Ankasha project to stream real-time abstraction/level data to the Nile Basin Initiative portal.</p>
+                <h5 class="font-semibold mt-4 mb-1">Local Participation</h5>
+                <p>Mandate community well management committees + traditional elder consultation for the two pastoralist sites (Hambela, Shala).</p>
+                <h5 class="font-semibold mt-4 mb-1">Water Quality Management</h5>
+                <p>Budget for fluoride removal filters at Dodota, with annual water quality monitoring.</p>
+                <h5 class="font-semibold mt-4 mb-1">Long-Term Monitoring</h5>
+                <p>Install IoT flow/level sensors + satellite uplink at all 4 sites for public dashboard transparency.</p>
 
-                <p class="mt-6">이 네 지점은 최대 사회편익과 최소 외교·지역 갈등을 동시에 달성하도록 설계되었습니다. 단계별 타당성 조사(EIA·수질·시추 테스트) 후 착공을 권장합니다.</p>
+                <p class="mt-6">These four sites are designed to achieve maximum social benefit while minimizing diplomatic and local conflict. Proceeding with phased feasibility studies (EIA, water quality, test drilling) before construction is recommended.</p>
             `;
 
             const progressSteps = [
