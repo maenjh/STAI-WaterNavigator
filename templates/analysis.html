@@ -71,6 +71,19 @@
                             <label for="country-select" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
                             <select id="country-select" class="w-full border-gray-300 rounded-md shadow-sm">
                                 <option>Ethiopia</option>
+                                <option>Angola</option>
+                                <option>Bangladesh</option>
+                                <option>Cambodia</option>
+                                <option>Haiti</option>
+                                <option>Laos</option>
+                                <option>Madagascar</option>
+                                <option>Myanmar</option>
+                                <option>Nepal</option>
+                                <option>Senegal</option>
+                                <option>Somalia</option>
+                                <option>Tanzania</option>
+                                <option>Uganda</option>
+                                <option>Yemen</option>
                             </select>
                         </div>
                         <div>
@@ -157,6 +170,23 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+
+        const countryCoordinates = {
+            "Ethiopia": { lat: 9.145, lon: 40.4897, zoom: 6 },
+            "Angola": { lat: -11.2027, lon: 17.8739, zoom: 5 },
+            "Bangladesh": { lat: 23.6850, lon: 90.3563, zoom: 7 },
+            "Cambodia": { lat: 12.5657, lon: 104.9910, zoom: 7 },
+            "Haiti": { lat: 18.9712, lon: -72.2852, zoom: 8 },
+            "Laos": { lat: 19.8563, lon: 102.4955, zoom: 6 },
+            "Madagascar": { lat: -18.7669, lon: 46.8691, zoom: 5 },
+            "Myanmar": { lat: 21.9162, lon: 95.9560, zoom: 5 },
+            "Nepal": { lat: 28.3949, lon: 84.1240, zoom: 7 },
+            "Senegal": { lat: 14.4974, lon: -14.4524, zoom: 7 },
+            "Somalia": { lat: 5.1521, lon: 46.1996, zoom: 6 },
+            "Tanzania": { lat: -6.3690, lon: 34.8888, zoom: 6 },
+            "Uganda": { lat: 1.3733, lon: 32.2903, zoom: 7 },
+            "Yemen": { lat: 15.5527, lon: 48.5164, zoom: 6 }
+        };
 
         let ethiopiaRegions = {
             "Addis Abeba": { lat: 9.0, lon: 38.75 },
@@ -260,6 +290,33 @@
                 regionSelect.disabled = true;
             });
 
+        const countrySelect = document.getElementById('country-select');
+        countrySelect.addEventListener('change', (event) => {
+            const countryName = event.target.value;
+            if (countryCoordinates[countryName]) {
+                const { lat, lon, zoom } = countryCoordinates[countryName];
+                map.flyTo([lat, lon], zoom);
+
+                // For now, region and analysis are specific to Ethiopia
+                const isEthiopia = countryName === 'Ethiopia';
+                document.getElementById('region-select').disabled = !isEthiopia;
+                document.getElementById('core-analysis-controls').style.display = isEthiopia ? 'block' : 'none';
+                
+                // Clear Ethiopia-specific layers if another country is selected
+                if (!isEthiopia) {
+                    waterPointsLayerGroup.clearLayers();
+                    candidateSiteLayerGroup.clearLayers();
+                    document.getElementById('analysis-results-wrapper').style.display = 'none';
+                    if (regionBoundaryLayer) {
+                        map.removeLayer(regionBoundaryLayer);
+                    }
+                } else {
+                    // Reload Ethiopia data if selected back
+                    loadData();
+                }
+            }
+            });
+
         regionSelect.addEventListener('change', (event) => {
             const regionName = event.target.value;
             
@@ -315,10 +372,10 @@
         function findCandidateSites() {
             // 하드코딩된 후보지를 반환합니다.
             return [
-                { lat: 12.55, lon: 35.62 },
-                { lat: 7.73, lon: 33.74 },
-                { lat: 4.18, lon: 42.32 },
-                { lat: 11.67, lon: 40.79 }
+                { lat: 5.905696, lon: 38.650472 },
+                { lat: 10.819452, lon: 36.647936 },
+                { lat: 8.204129, lon: 39.125290 },
+                { lat: 7.49, lon: 38.53 }
             ];
         }
 
@@ -427,102 +484,225 @@
 
         function generateReport() {
             reportContainer.classList.remove('hidden');
-            reportContentEl.innerHTML = '';
             
             const fullReportText = `
-                <p>아래 표는 지도-앱에 표시된 네 좌표를 ① 지리·지질, ② 지하수 잠재력(EthHGComb), ③ 주요 리스크·기회 관점에서 정리한 것입니다.</p>
-                <p class="text-sm text-gray-500">(EthHGComb 코드 뜻 — CSIF-H > I-M/H > U-LM 순으로 생산성이 높은 대수층 등급입니다.)</p>
-                
-                <div class="overflow-x-auto mt-6">
+                <h3 class="text-xl font-bold mb-4">우물 후보 4 개 지점 선정·분석 종합 리포트</h3>
+                <p class="text-sm text-gray-500 mb-6">(Hambela Wamena, Ankasha, Dodota, Shala)</p>
+
+                <h4 class="font-bold mt-6 mb-2">1. 평가 프레임워크 요약</h4>
+                <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">좌표 (위도, 경도)</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">행정구·지형</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">대수층 등급·특성</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">핵심 포인트</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">단계</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">설명</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">반영 비율</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 text-sm">
                             <tr>
-                                <td class="px-4 py-4 font-medium text-gray-900">1</td>
-                                <td class="px-4 py-4 whitespace-nowrap">12.550 N, 35.620 E</td>
-                                <td class="px-4 py-4">Benishangul-Gumuz 주 Metekel 존<br>청나일(아바이) 본류에서 ≈ 8 km</td>
-                                <td class="px-4 py-4"><strong>CSIF-H</strong><br>(쥐라기 사암·충적층, 간극 + 절리 수리전도도 高)</td>
-                                <td class="px-4 py-4">외교 리스크 – 하류(수단·이집트) 유량 감소 우려가 가장 큰 지점. 대용량 양수 가능하지만, 추출량-유효유출량 모델링과 국가 간 협의 필수.</td>
+                                <td class="px-4 py-4">① 적격 필터</td>
+                                <td class="px-4 py-4">
+                                    <ul class="list-disc list-inside">
+                                        <li>기존 우물 반경 10 km 외</li>
+                                        <li>지하수 등급 ≥ I-M/H (또는 ‘Very High’)</li>
+                                        <li>토지 이용: 경작·정착지 값 0</li>
+                                        <li>가뭄지수 ≤ 1.0 (극심) 또는 ≥ 9.0 (저긴급)</li>
+                                    </ul>
+                                </td>
+                                <td class="px-4 py-4">―</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4 font-medium text-gray-900">2</td>
-                                <td class="px-4 py-4 whitespace-nowrap">7.730 N, 33.740 E</td>
-                                <td class="px-4 py-4">Gambela 주 Anuak 존<br>Baro-Akobo 저지 습지대·완충구역</td>
-                                <td class="px-4 py-4"><strong>U-LM</strong><br>(얕은 미고결 퇴적층, 저-중 생산성)</td>
-                                <td class="px-4 py-4">초저밀도 인구 – 국립공원 동쪽 마을 &lt; 2 천 명. 얕은 관정(≤ 70 m)으로도 생활·농업용수 확보 용이. 철·유기물 농도 대비한 여과 설계 필요.</td>
+                                <td class="px-4 py-4">② 정량 점수</td>
+                                <td class="px-4 py-4">인구 30 % · 지하수 30 % · 가뭄 20 % · 토지 20 % (0–1 척도)</td>
+                                <td class="px-4 py-4">100 %</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4 font-medium text-gray-900">3</td>
-                                <td class="px-4 py-4 whitespace-nowrap">4.180 N, 42.320 E</td>
-                                <td class="px-4 py-4">Somali 주 Afder-Liben 경계<br>Ogaden 분지, 사막화 진행 지역</td>
-                                <td class="px-4 py-4"><strong>I-M/H</strong><br>(균열 현무암, 중-고 생산성)</td>
-                                <td class="px-4 py-4">극건조-유목 지역 – 정착 인구 수백 명. 균열망 덕분에 건기에도 수량 안정적이나 지하수 염도·불소 모니터링 중요. 태양광 + 역삼투 모듈 권장.</td>
+                                <td class="px-4 py-4">③ 품질 검증</td>
+                                <td class="px-4 py-4">시추 성공률·수질, 태양광 면적, 접근성 등 기술·재무 실현성</td>
+                                <td class="px-4 py-4">보완 지표</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-4 font-medium text-gray-900">4</td>
-                                <td class="px-4 py-4 whitespace-nowrap">11.670 N, 40.790 E</td>
-                                <td class="px-4 py-4">Afar 주 Zone 3 (Gelalu-Samurobi)<br>대아프리카 열곡 중앙 고원</td>
-                                <td class="px-4 py-4"><strong>I-M/H</strong><br>(현무암 용수대, 중-고 생산성)</td>
-                                <td class="px-4 py-4">지진·열수 리스크 – 리프트 계곡 특성상 온천성·고불소 가능성. 9 천 명 내외 유목-소규모 농업 인구. 광역 관정-저장조 조합으로 가뭄 완충 가능.</td>
+                                <td class="px-4 py-4">④ 분쟁 리스크</td>
+                                <td class="px-4 py-4">초국가 수량 갈등, 지역·민족 갈등, 환경 규제 위험</td>
+                                <td class="px-4 py-4">서술 평가</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h4 class="font-bold mt-6 mb-2">종합 해설</h4>
-                <p><strong>#1 Metekel</strong> — 대수층 등급이 가장 높아 생산성은 뛰어나지만, 청나일 수계와 가깝고 수단 국경까지 ≈ 80 km라 외교적 민감도가 최대입니다. GERD(그랜드 에티오피아 르네상스 댐) 이슈와 결부될 수 있으므로, 시추 전부터 이집트·수단에 투명한 수문자료 공유가 필요합니다.</p>
-                <p><strong>#2 Gambela</strong> — 습지대 가장자리의 느슨한 모래·자갈층(U-LM)으로 천공·유지비가 낮고, 인구도 희소해 생태·사회적 충돌 위험이 거의 없습니다. 다만 철·망간·유기물 농도가 높을 수 있으므로 간단한 침전·모래여과를 병행하세요.</p>
-                <p><strong>#3 Somali Afder-Liben</strong> — 연 1 % 미만의 강우량, 지표수 부재 지역입니다. 현무암 균열대(I-M/H)가 건기에도 비교적 안정적 수량을 공급하지만, 불소·염도 초과 빈도가 높으므로 역삼투(RO)나 블렌딩 설계가 필요합니다. 태양광 펌프와 결합해 운영비를 최소화할 수 있습니다.</p>
-                <p><strong>#4 Afar Rift</strong> — 리프트 계곡 중앙으로 지열·지진 활동이 잦은 곳입니다. 현무암 파쇄대라 생산성은 높지만, 열수·고불소·실리카 함량이 관측됩니다. 정밀 수질 분석 후, 불소 제거(Activated Alumina, RO) 모듈 포함 여부를 결정해야 합니다.</p>
+                <h4 class="font-bold mt-6 mb-2">2. 후보지별 상세 분석</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">좌표 / 행정구역</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">선정 핵심 이유</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">잠재 분쟁·환경 리스크</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                            <tr>
+                                <td class="px-4 py-4">1</td>
+                                <td class="px-4 py-4">5.91 °N, 38.65 °E<br>Hambela Wamena (Guji 존)</td>
+                                <td class="px-4 py-4">
+                                    <ul class="list-disc list-inside">
+                                        <li>인구 296 명 km⁻²</li>
+                                        <li>기존 우물 54.5 km</li>
+                                        <li>Genale-Dawa 현무암층, I-M/H 등급 → 1–5 L s⁻¹ 예상 <br><small>scirp.org, etd.aau.edu.et</small></li>
+                                        <li>지속 가뭄·사료 부족 지역</li>
+                                    </ul>
+                                </td>
+                                <td class="px-4 py-4"><strong>중간</strong> – Genale-Dawa 수계가 케냐·소말리아로 이어져 장래 관개 확장 시 수량 배분 협상 필요. 지역 목축민 간 우물 소유권 분쟁 사례도 있음 <br><small>earthisland.org</small></td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">2</td>
+                                <td class="px-4 py-4">10.82 °N, 36.65 °E<br>Ankasha (Awi 존)</td>
+                                <td class="px-4 py-4">
+                                    <ul class="list-disc list-inside">
+                                        <li>인구 230 명 km⁻²</li>
+                                        <li>Blue Nile 상류, I-M/H 지질 <br><small>sciencedirect.com</small></li>
+                                        <li>가뭄지수 0.0 → 최우선 수요</li>
+                                    </ul>
+                                </td>
+                                <td class="px-4 py-4"><strong>높음</strong> – Blue Nile 수계 신규 양수는 이집트·수단과 긴장 지속. GERD 운영·충수 시기와 연동된 외교 민감 지역 <br><small>apnews.com, carnegieendowment.org, sciencedirect.com</small></td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">3</td>
+                                <td class="px-4 py-4">8.20 °N, 39.13 °E<br>Dodota (Arsi 존)</td>
+                                <td class="px-4 py-4">
+                                    <ul class="list-disc list-inside">
+                                        <li>인구 212 명 km⁻²</li>
+                                        <li>기존 우물 22.6 km</li>
+                                        <li>리프트계곡 현무암, I-M/H</li>
+                                        <li>식수·축수 겸용 잠재</li>
+                                    </ul>
+                                </td>
+                                <td class="px-4 py-4"><strong>낮음(외교)</strong> – 폐쇄 내륙 유역<br><strong>주의(건강)</strong> – 고불소·염분 잠재, 필터 비용 반영 필요 <br><small>researchgate.net, pmc.ncbi.nlm.nih.gov</small></td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">4</td>
+                                <td class="px-4 py-4">7.49 °N, 38.53 °E<br>Shala (West Arsi 존)</td>
+                                <td class="px-4 py-4">
+                                    <ul class="list-disc list-inside">
+                                        <li>인구 283 명 km⁻²</li>
+                                        <li>Very High 지하수 등급, 18 km 이상 기존 우물</li>
+                                        <li>반복 가뭄 및 IPC 2-3 단계 <br><small>sciencedirect.com, amazon.com</small></li>
+                                    </ul>
+                                </td>
+                                <td class="px-4 py-4"><strong>매우 낮음(외교)</strong> – 폐쇄호수 유역<br><strong>보통(지역)</strong> – 목축 이동경로 중첩, 이용 규정·관리위 설치 필요 <br><small>ejol.aau.edu.et</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                <h4 class="font-bold mt-6 mb-2">실무 체크리스트</h4>
-                <pre class="bg-gray-50 p-4 rounded-md mt-4 overflow-x-auto"><code>단계\t주요 활동
-1. 지구물리 탐사\t전기비저항(ERT)·자기장 조사로 균열대·대수층 두께 파악
-2. 시험양수 & 수질 분석\t최소 72 h 펌핑시험으로 지속 가능 양수량 추정, 불소·염도·철·망간 전수 조사
-3. 환경·사회 영향평가(ESIA)\t#1은 국경 하류 유량 모델링, #2는 국립공원 야생동물 이동경로, #3·#4는 유목민 계절 이동 고려
-4. 커뮤니티 운영 모델\t마을-위원회 소유, 펌프-패널 유지기금 적립, 현지 기술자 교육
-5. 모니터링 & MRV\t유량계·수위계 IoT 센싱 → 위성 토양수분 지표와 결합, 블록체인 MRV 플랫폼 연계</code></pre>
-                <p class="mt-4">이 네 지점은 지하수 잠재력·사회적 수요·리스크가 각기 달라, 사업 목표(외교리스크 수용 vs. 지역개발 우선)와 예산에 따라 우선순위를 조정하시길 권장합니다.</p>
+                <h4 class="font-bold mt-6 mb-2">3. 왜 이 네 곳인가?</h4>
+                <h5 class="font-semibold mt-4 mb-1">사회·경제 편익 극대화</h5>
+                <p>평균 인구 255 명 km⁻², 기존 우물 네트워크와 18 – 55 km 떨어져 ‘중복 투자’ 위험이 없음.</p>
+                <h5 class="font-semibold mt-4 mb-1">지하수 성공 가능성</h5>
+                <p>네 곳 모두 균열 현무암대(I-M/H) 또는 Very High 등급으로, 시추 성공률 ≥ 80 % 예측.</p>
+                <h5 class="font-semibold mt-4 mb-1">가뭄·식수 긴급도</h5>
+                <p>Hambela·Ankasha·Dodota·Shala 모두 가뭄지수 0.0 또는 IPC 2-3 수준의 물 스트레스 지역.</p>
+                <h5 class="font-semibold mt-4 mb-1">토지 갈등 최소화</h5>
+                <p>Geo-Wiki 값 0 → 경작·정착지 없는 공동 목초지/초지·공원 완충대; 사유지 보상 부담 ↓.</p>
+
+                <h4 class="font-bold mt-6 mb-2">4. 분쟁 · 위협 통합 평가</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">유형</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">위치</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">리스크 요약</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">대응 권고</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                            <tr>
+                                <td class="px-4 py-4">초국가 수계 갈등</td>
+                                <td class="px-4 py-4">Ankasha (Blue Nile)</td>
+                                <td class="px-4 py-4">GERD 이후 이집트·수단의 “상류 신규 개발 감시” 대상.</td>
+                                <td class="px-4 py-4">NBI, AU-WRG 등 국제 투명성 플랫폼에 수위·양수 데이터 실시간 공개.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">연계 수계 협상</td>
+                                <td class="px-4 py-4">Hambela Wamena</td>
+                                <td class="px-4 py-4">Genale-Dawa 하류(소말리아·케냐) 관개 확장 시 물 배분 협상 필요.</td>
+                                <td class="px-4 py-4">IGAD 수자원 작업반에 프로젝트 등록, 삼국 MOU 추진.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">지역 목축·민족 분쟁</td>
+                                <td class="px-4 py-4">Hambela·Shala</td>
+                                <td class="px-4 py-4">보레홀 소유권·접근 통제로 무력 충돌 사례.</td>
+                                <td class="px-4 py-4">우물 관리위원회 구성, 전통 의사결정(Gadaa) 절차 포함.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4">수질·보건 위험</td>
+                                <td class="px-4 py-4">Dodota</td>
+                                <td class="px-4 py-4">불소·염분 농도↑ → 치아·골격 플루오린증 우려.</td>
+                                <td class="px-4 py-4">역삼투·활성알루미나 필터 예산( CapEx + OpEx ≒ 0.5 US¢ L⁻¹) 포함.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4 class="font-bold mt-6 mb-2">5. 종합 권고</h4>
+                <h5 class="font-semibold mt-4 mb-1">착수 우선순위</h5>
+                <p>Ankasha ↔ Hambela Wamena (긴급도·편익 동등) → 병행 타당성 조사, Dodota·Shala는 2차 단계.</p>
+                <h5 class="font-semibold mt-4 mb-1">외교·데이터 투명성</h5>
+                <p>Ankasha 프로젝트는 Nile Basin Initiative 포털에 양수·수위 실시간 송신.</p>
+                <h5 class="font-semibold mt-4 mb-1">지역 참여</h5>
+                <p>두 목축 지역(Hambela, Shala)은 커뮤니티 우물 관리위원회 + 전통 엘더 자문 의무화.</p>
+                <h5 class="font-semibold mt-4 mb-1">수질 관리</h5>
+                <p>Dodota는 불소 제거 필터 예산 반영, 연 1회 수질 모니터링.</p>
+                <h5 class="font-semibold mt-4 mb-1">장기 모니터링</h5>
+                <p>4 개소 모두 IoT 유량·수위 센서 + 위성 통신 설치, 공개 대시보드로 투명성 확보.</p>
+
+                <p class="mt-6">이 네 지점은 최대 사회편익과 최소 외교·지역 갈등을 동시에 달성하도록 설계되었습니다. 단계별 타당성 조사(EIA·수질·시추 테스트) 후 착공을 권장합니다.</p>
             `;
 
-            // A simplified representation of the text for typing animation
-            const textToType = fullReportText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-            typewriterEffect(textToType, fullReportText);
-        }
+            const progressSteps = [
+                { percent: 0, text: "Initializing analysis..." },
+                { percent: 25, text: "Gathering geological data..." },
+                { percent: 50, text: "Analyzing population density..." },
+                { percent: 75, text: "Assessing conflict & environmental risk..." },
+                { percent: 100, text: "Compiling final report..." }
+            ];
 
-        function typewriterEffect(text, fullHtml) {
-            let i = 0;
-            const speed = 10; // Typing speed in milliseconds
-            reportBtn.disabled = true;
-            reportBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            reportContentEl.innerHTML = `
+                <div id="report-progress-container" class="py-8">
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                        <div id="report-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-in-out" style="width: 0%"></div>
+                    </div>
+                    <p id="report-progress-text" class="text-center text-gray-600 font-semibold"></p>
+                </div>
+            `;
 
-            reportContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const progressBar = document.getElementById('report-progress-bar');
+            const progressText = document.getElementById('report-progress-text');
+            let currentStep = 0;
 
-            function type() {
-                if (i < text.length) {
-                    // To make it look like typing, we show progress
-                    const progressPercentage = (i / text.length) * 100;
-                    reportContentEl.innerHTML = `<p>Generating report... ${Math.round(progressPercentage)}%</p><div class="typing-cursor"></div>`;
-                    i += 50; // Jump in increments to speed up for long text
-                    setTimeout(type, speed);
+            function updateProgress() {
+                if (currentStep < progressSteps.length) {
+                    const step = progressSteps[currentStep];
+                    progressBar.style.width = step.percent + '%';
+                    progressText.textContent = step.text;
+                    currentStep++;
+                    setTimeout(updateProgress, 1200);
                 } else {
-                    // Once done, render the full formatted HTML
-                    reportContentEl.innerHTML = fullHtml;
-                    reportBtn.disabled = false;
-                    reportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    reportContentEl.innerHTML = fullReportText;
+                    scrollToReport();
                 }
             }
-            type();
+            updateProgress();
+        }
+
+        function scrollToReport() {
+            reportContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 </script>
 </body>
+</html> 
 </html> 
