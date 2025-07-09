@@ -256,13 +256,48 @@
             }
 
             if (regionGeojsonData) {
-                const regionName = "Benshangul-Gumaz";
-                const regionFeature = regionGeojsonData.features.find(
-                    feature => feature.properties.NAME_1 === regionName
+                // Highlight Western Amhara
+                const amharaFeature = regionGeojsonData.features.find(
+                    feature => feature.properties.NAME_1 === "Amhara"
                 );
 
-                if (regionFeature) {
-                    const highlight = L.geoJSON(regionFeature, {
+                if (amharaFeature) {
+                    const lakeTanaLongitude = 37.31;
+                    const clippingBox = turf.polygon([[
+                        [33, 3],
+                        [lakeTanaLongitude, 3],
+                        [lakeTanaLongitude, 15],
+                        [33, 15],
+                        [33, 3]
+                    ]]);
+
+                    try {
+                        const westernAmhara = turf.intersect(amharaFeature.geometry, clippingBox);
+
+                        if (westernAmhara) {
+                            const highlight = L.geoJSON(westernAmhara, {
+                                style: {
+                                    color: "#800080",
+                                    weight: 1,
+                                    opacity: 0.6,
+                                    fillColor: "#800080",
+                                    fillOpacity: 0.2
+                                }
+                            }).bindPopup("Western Amhara");
+                            specialHighlightLayer.addLayer(highlight);
+                        }
+                    } catch (e) {
+                        console.error("Error during Turf.js intersection:", e);
+                    }
+                }
+
+                // Highlight Benishangul-Gumuz
+                const gumuzFeature = regionGeojsonData.features.find(
+                    feature => feature.properties.NAME_1 === "Benshangul-Gumaz"
+                );
+
+                if (gumuzFeature) {
+                    const highlightGumuz = L.geoJSON(gumuzFeature, {
                         style: {
                             color: "#800080",
                             weight: 1,
@@ -270,38 +305,10 @@
                             fillColor: "#800080",
                             fillOpacity: 0.2
                         }
-                    }).bindPopup("Benishangul-Gumuz");
-                    specialHighlightLayer.addLayer(highlight);
+                    }).bindPopup("Benshangul-Gumaz");
+                    specialHighlightLayer.addLayer(highlightGumuz);
                 }
             }
-            
-            const lakeTanaCoords = [12.02, 37.31];
-            const lakeTanaRadius = 35000;
-            const lakeTanaCircle = L.circle(lakeTanaCoords, {
-                radius: lakeTanaRadius,
-                color: "#800080",
-                weight: 1,
-                opacity: 0.6,
-                fillColor: "#800080",
-                fillOpacity: 0.2
-            }).bindPopup("Lake Tana");
-            specialHighlightLayer.addLayer(lakeTanaCircle);
-
-            const alatishParkCoords = [
-                [12.5, 35.2],
-                [12.5, 35.8],
-                [12.0, 35.8],
-                [12.0, 35.2],
-                [12.5, 35.2]
-            ];
-            const alatishParkPolygon = L.polygon(alatishParkCoords, {
-                color: "#800080",
-                weight: 1,
-                opacity: 0.6,
-                fillColor: "#800080",
-                fillOpacity: 0.2
-            }).bindPopup("Alatish National Park");
-            specialHighlightLayer.addLayer(alatishParkPolygon);
         }
 
         function loadData() {
